@@ -1,0 +1,69 @@
+# Runs the safety gate from `main` against a PR. pull_request_target means the PR can't
+# change this workflow or the checker: both come from the base branch. The PR's code is only
+# ever read as text (parsed with `ast`), never installed or run, so this is safe for forks.
+name: Safety
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main (the trusted checker)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Check out the PR (read as data only)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: List changed files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/$REPO/pulls/$PR/files" --paginate \
+            --jq '.[] | .filename, (.previous_filename // empty)' > changed.txt
+          cat changed.txt
+
+      - name: Run the safety check
+        id: check
+        env:
+          IS_OWNER: ${{ github.event.pull_request.user.login == github.repository_owner }}
+        run: |
+          owner_flag=""
+          if [ "$IS_OWNER" = "true" ]; then owner_flag="--owner"; fi
+          set +e
+          python -I base/scripts/safety_check.py --root pr --changed-files changed.txt $owner_flag > report.md
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          cat report.md
+
+      - name: Post the result on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr comment "$PR" --repo "$REPO" --body-file report.md --edit-last --create-if-none
+
+      - name: Fail if there were problems
+        if: steps.check.outputs.status != '0'
+        run: exit 1

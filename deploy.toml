@@ -1,0 +1,15 @@
+# Deployed by roost (github.com/nick-gerrard/roost) when CI passes on main.
+# A background worker: no subdomain, no website.
+name = "ducksy"
+on = "ci-pass"
+
+[backend]
+workdir = "."
+start = "python -m ducksy"
+# Run as a throwaway user in a systemd sandbox: no access to the rest of the server.
+sandbox = true
+
+[backend.env]
+# roost requires a port; Duck$y doesn't serve HTTP, so this is unused.
+PORT = "{port}"
+# DISCORD_TOKEN and CHANNEL_ID live in ~/.roost/env/ducksy.env on the server.
