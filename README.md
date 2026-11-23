@@ -5,9 +5,9 @@ today's games and open bets, and does whatever other fun things the crew adds.
 
 ## 👉 Want to add something? Read the [guide](GUIDE.md)
 
-You don't need to be a programmer or have a computer. Paste one prompt into the Claude,
-ChatGPT or Gemini app on your phone, and the [guide](GUIDE.md) takes you from idea to live in
-Discord. Looking for something to build? Check the
+You don't need to be a programmer or have a computer. Describe your idea to an AI agent on
+your phone (Claude Code, Codex or Jules). It writes the code and opens the pull request, and
+the [guide](GUIDE.md) covers everything from setup to live in Discord. Looking for something to build? Check the
 [idea board](https://github.com/nick-gerrard/ducksbucksbot/issues?q=is%3Aopen+label%3Aidea).
 
 ## How it works

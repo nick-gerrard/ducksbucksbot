@@ -5,8 +5,9 @@ fake money ("DucksBucks") on sports. **They are probably not a programmer and ar
 their phone.** Your job is to turn their idea into working code, get it to a pull request, and
 explain things in plain words along the way.
 
-Repo: https://github.com/nick-gerrard/ducksbucksbot (Python 3.13, discord.py 2.x). Nick owns it
-and merges pull requests. Once a PR is merged, it's live in Discord a few minutes later.
+Repo: https://github.com/nick-gerrard/ducksbucksbot (Python 3.13, discord.py 2.x). Nick owns it.
+Friends are collaborators, so you can push branches and open PRs on it directly (no fork).
+Nick approves and merges PRs. Once a PR is merged, it's live in Discord a few minutes later.
 
 ## How to work with them
 
@@ -16,10 +17,12 @@ and merges pull requests. Once a PR is merged, it's live in Discord a few minute
 2. **Keep it to one file.** A feature is one new file, `ducksy/features/<name>.py`. Use
    lowercase and underscores in the name, e.g. `magic_8_ball.py`. Pick a name no one else is
    likely to use.
-3. **Hand over the result in the way that fits your tools** (see "Delivering it" below).
+3. **Open the pull request yourself** (see "Delivering it" below). They shouldn't have to
+   copy, paste, or edit anything.
 4. **Explain how to use it** in one or two lines, e.g. "Type `/roast @someone` in Discord."
-5. If a check on their pull request fails, they'll paste the error to you. Fix the file, give
-   them the whole file again, and say exactly what to replace.
+5. If a check on their pull request fails, read the PR's checks and the 🦆 Safety comment
+   yourself if you can (they may send a screenshot instead), fix the file, and push to the
+   same branch so the PR updates.
 
 Never ask them to install anything, open a terminal, or edit files other than their feature.
 If an idea needs something outside these rules (another website, a new library, changing the
@@ -204,41 +207,36 @@ messages. Features should start from a slash command, a button or a schedule.
 
 ## Delivering it
 
-**If you can work in their GitHub fork and open pull requests** (Claude Code, Codex, Jules,
-Copilot and similar agents):
+You're a coding agent (Claude Code, Codex, Jules, Copilot, etc.) working directly in
+`nick-gerrard/ducksbucksbot`:
 
-1. Make sure the fork is up to date with `nick-gerrard/ducksbucksbot` `main`.
-2. Create a branch and add the feature file. If you can run commands, run
-   `uv run pytest -q` and `uv run python scripts/safety_check.py --root .` and fix any failures.
-3. Open a pull request **into `nick-gerrard/ducksbucksbot`, branch `main`**. If you can only
-   open PRs inside the fork, push the branch and tell them to tap **Contribute → Open pull
-   request** on their fork's GitHub page.
-4. Use the PR template: what it adds, and how to use it.
+1. Start from the latest `main` and create a branch named `feature/<name>`. When continuing an
+   existing PR, check out that PR's branch instead.
+2. Add or change only `ducksy/features/<name>.py` (and optionally
+   `tests/features/test_<name>.py`). Look through the other files in `ducksy/features/` first
+   so you don't reuse an existing slash command name.
+3. If you can run commands, run these and fix anything that fails:
+   ```
+   uv run pytest -q
+   uv run python scripts/safety_check.py --root .
+   ```
+4. Commit, push, and **open a pull request into `main`** on `nick-gerrard/ducksbucksbot`.
+   Fill in `.github/pull_request_template.md`: what it adds and how to use it, in plain words.
+   If your tool needs the user to tap a button to create the PR, tell them exactly which one.
+5. Send them the PR link and one line on how to use the feature once it's live.
 
-**If you're a chat assistant without GitHub access**, reply with exactly these three things so
-they can paste them into GitHub's website:
+Never push to `main` (it's protected), never touch files outside the feature folders, and
+never create tags.
 
-1. **File name:** `ducksy/features/<name>.py`
-2. **The complete file** in one code block, with nothing left out and no "rest stays the same"
-3. **Pull request text:** a short title, plus one or two sentences on what it does and how to
-   use it
-
-Then point them to the "Path B" steps in GUIDE.md, or tell them in short:
-
-1. Open the repo's `ducksy/features` folder on GitHub.
-2. Tap **Add file → Create new file** and paste the file name (just the part after
-   `ducksy/features/`) and the code.
-3. Tap **Commit changes… → Propose changes → Create pull request**.
+If you're a plain chat assistant with no access to GitHub, don't hand them code to paste.
+Tell them to follow GUIDE.md in the repo, which sets them up with an agent that can open the
+PR for them.
 
 ## Fixing a failed check
 
-They may paste one of these:
+- **🦆 Safety** comment on the PR: it names the file, the line, and what isn't allowed.
+  Rewrite that part within the rules.
+- **test** failure: open the check's log. It's usually a typo, a duplicate command name, or a
+  missing description.
 
-- **🦆 Safety check** comment: it lists the line and what isn't allowed. Rewrite that part
-  within the rules.
-- **test** failure: usually a typo, a duplicate command name, or a missing description.
-  Read the error, fix it, and send the whole file again.
-
-To update an open PR without an agent, they open the PR on GitHub, go to **Files changed**, tap
-**⋯ → Edit file** on their file, paste the new version, and commit. The checks re-run on their
-own.
+Push the fix to the same branch; the PR and its checks update on their own.
