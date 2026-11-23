@@ -1,0 +1,16 @@
+name: Feature idea
+description: Something fun Duck$y could do. Anyone can pick it up!
+labels: ["idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would you type, and what would Duck$y do?
+      placeholder: "/roast @someone → Duck$y roasts them about their betting record"
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Want to build it yourself? Follow [GUIDE.md](https://github.com/nick-gerrard/ducksbucksbot/blob/main/GUIDE.md) and comment "I'm on it" here.

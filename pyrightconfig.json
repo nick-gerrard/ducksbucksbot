@@ -2,5 +2,6 @@
   "venvPath": ".",
   "venv": ".venv",
   "include": ["ducksy", "tests", "scripts"],
+  "exclude": ["ducksy/features", "tests/features", ".venv"],
   "typeCheckingMode": "standard"
 }

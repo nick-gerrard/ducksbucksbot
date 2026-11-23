@@ -1,0 +1,11 @@
+name: Something's broken
+description: A command errors, or Duck$y does something weird
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you typed, what you expected, and what Duck$y did instead.
+    validations:
+      required: true

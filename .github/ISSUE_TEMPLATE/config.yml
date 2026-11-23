@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to build a feature
+    url: https://github.com/nick-gerrard/ducksbucksbot/blob/main/GUIDE.md
+    about: The step-by-step guide (phone-friendly, no coding needed)

@@ -3,8 +3,12 @@
 The official mascot of [DucksBucks](https://ducksbucks.nickgerrard.dev): a Discord bot that posts
 today's games and open bets, and does whatever other fun things the crew adds.
 
-**Want to add something?** Read [CONTRIBUTING.md](CONTRIBUTING.md). You don't need to be a
-programmer: an AI assistant can do the coding, and you can build a new feature in an evening.
+## 👉 Want to add something? Read the [guide](GUIDE.md)
+
+You don't need to be a programmer or have a computer. Paste one prompt into the Claude,
+ChatGPT or Gemini app on your phone, and the [guide](GUIDE.md) takes you from idea to live in
+Discord. Looking for something to build? Check the
+[idea board](https://github.com/nick-gerrard/ducksbucksbot/issues?q=is%3Aopen+label%3Aidea).
 
 ## How it works
 

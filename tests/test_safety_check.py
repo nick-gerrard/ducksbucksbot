@@ -41,6 +41,9 @@ def test_ok_feature():
         "bot.http.token",
         "x = bot.http",
         "().__class__.__bases__",
+        "super(Foo, self).__init__.__globals__",
+        "x.__init__",
+        "super().__init__.__globals__",
         "discord.utils.os.system('ls')",
         "discord.File('/proc/self/environ')",
         "from discord import File",
@@ -76,3 +79,12 @@ def test_owner_skips_path_rule(tmp_path):
 @pytest.mark.parametrize("code", ["from ducksy import bot", "from ducksy import __main__"])
 def test_ducksy_core_is_off_limits(code):
     assert check_source("f.py", code)
+
+
+def test_super_init_is_allowed():
+    assert (
+        check_source(
+            "f.py", "class V:\n    def __init__(self):\n        super().__init__(timeout=1)\n"
+        )
+        == []
+    )

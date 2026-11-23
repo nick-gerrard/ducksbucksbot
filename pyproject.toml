@@ -28,3 +28,12 @@ target-version = "py313"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "ASYNC"]
 ignore = ["E501"]  # the formatter handles line length
+
+# Friends' features are often pasted in from a phone, so CI only fails them on real bugs
+# (syntax errors, undefined names), never on style.
+[tool.ruff.lint.per-file-ignores]
+"ducksy/features/*" = ["E", "W", "I", "B", "UP", "ASYNC", "F401", "F541", "F841"]
+"tests/features/*" = ["E", "W", "I", "B", "UP", "ASYNC", "F401", "F541", "F841"]
+
+[tool.ruff.format]
+exclude = ["ducksy/features/*", "tests/features/*"]

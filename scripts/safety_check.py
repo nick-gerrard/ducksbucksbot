@@ -148,6 +148,16 @@ def _is_allowed_import(module: str) -> bool:
     return module in ALLOWED_IMPORTS or module.startswith(ALLOWED_IMPORT_PREFIXES)
 
 
+def _is_super_init(node: ast.Attribute) -> bool:
+    return (
+        node.attr == "__init__"
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "super"
+        and not node.value.args
+    )
+
+
 def check_source(path: str, source: str) -> list[str]:
     """Problems in one feature file, as human-readable strings."""
     try:
@@ -194,6 +204,8 @@ def check_source(path: str, source: str) -> list[str]:
             elif node.id.startswith("__") and node.id not in ("__name__", "__doc__"):
                 bad(node, f"uses `{node.id}`, a Python internal")
         elif isinstance(node, ast.Attribute):
+            if _is_super_init(node):
+                continue  # `super().__init__(...)` is how you set up a discord.ui.View
             if node.attr.startswith("_"):
                 bad(node, f"uses `.{node.attr}`: private and internal attributes are off limits")
             elif node.attr in BANNED_ATTRS:
