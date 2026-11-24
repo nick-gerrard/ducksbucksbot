@@ -22,7 +22,26 @@ def test_ai_start_examples_pass_the_safety_check():
     for code in blocks:
         code = textwrap.dedent(code)
         compile(code, "AI_START.md", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+        if code.startswith("# tests/"):  # test examples run in CI only; they may import tests.*
+            continue
         assert check_source("AI_START.md", code) == []
+
+
+def test_ai_start_test_example_runs(tmp_path, monkeypatch):
+    """The test example in AI_START.md must really pass against the magic8 feature."""
+    import asyncio
+
+    import pytest
+
+    block = next(
+        b for b in re.findall(r"```python\n(.*?)```", AI_START, re.S) if b.startswith("# tests/")
+    )
+    pytest.importorskip("ducksy.features.magic8")
+    ns: dict = {}
+    exec(compile(block, "AI_START.md", "exec"), ns)
+    for name, fn in ns.items():
+        if name.startswith("test_"):
+            asyncio.run(fn())
 
 
 def test_docs_link_to_each_other():

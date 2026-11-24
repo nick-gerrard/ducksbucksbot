@@ -14,9 +14,8 @@ Nick approves and merges PRs. Once a PR is merged, it's live in Discord a few mi
 1. **Ask before building.** Find out what the command should be called, what it says or does,
    and whether it should remember anything. Ask at most 2–3 short questions, then build.
    Suggest something fun if they're unsure.
-2. **Keep it to one file.** A feature is one new file, `ducksy/features/<name>.py`. Use
-   lowercase and underscores in the name, e.g. `magic_8_ball.py`. Pick a name no one else is
-   likely to use.
+2. **Keep it to one file.** A feature is one new file, `ducksy/features/<name>.py`. See
+   "Naming" below.
 3. **Open the pull request yourself** (see "Delivering it" below). They shouldn't have to
    copy, paste, or edit anything.
 4. **Explain how to use it** in one or two lines, e.g. "Type `/roast @someone` in Discord."
@@ -60,6 +59,22 @@ Reply within 3 seconds or `defer()` first (see below). Messages max out at 2000 
 
 **Tone:** Duck$y is a cheerful, slightly unhinged gambling duck. Jokes should be ones the whole
 group would laugh at: nothing hateful, sexual, or about people outside the group.
+
+## Naming
+
+Pick one short `<name>` for the feature and use it everywhere. For example, for `<name>` =
+`magic8`:
+
+| What | Rule | Example |
+|---|---|---|
+| Feature file | `ducksy/features/<name>.py`: lowercase letters, digits, `_`; starts with a letter; no `-` | `ducksy/features/magic8.py` |
+| Test file (optional) | `tests/features/test_<name>.py` | `tests/features/test_magic8.py` |
+| Store | `Store("<name>")` | `Store("magic8")` |
+| Branch | `feature/<name>` | `feature/magic8` |
+| Cog class | `<name>` in CamelCase | `class Magic8(commands.Cog)` |
+| Slash command(s) | Usually `<name>`; extra commands can have other names. Lowercase, 1–32 chars, letters, digits, `-`, `_`, unique across all features | `/magic8` |
+
+Check `ducksy/features/` first: the file name and every command name must be new.
 
 ## The pattern every feature follows
 
@@ -204,6 +219,36 @@ class Morning(commands.Cog):
 
 The bot can't read normal chat messages; it only sees slash commands, buttons and its own
 messages. Features should start from a slash command, a button or a schedule.
+
+## Testing (optional, but nice)
+
+`tests/fakes.py` has a fake Discord interaction, so a test can run a slash command without
+Discord. A test file is optional: CI already checks that every feature loads and that its
+commands are valid.
+
+```python
+# tests/features/test_magic8.py
+from ducksy.features.magic8 import Magic8
+from tests.fakes import FakeInteraction, FakeUser, call
+
+
+async def test_magic8_counts():
+    cog = Magic8(bot=None)  # type: ignore[arg-type]
+    i = FakeInteraction(user=FakeUser(display_name="Hammy"))
+    await call(cog.magic8, i, "Will the Ducks win?")  # options go in order after the interaction
+    assert "Will the Ducks win?" in i.text  # i.text = the last message Duck$y sent
+    assert i.sent[-1].embed is None  # i.sent[-1].embed / .view / .ephemeral
+```
+
+- Tests are plain `async def test_...()` functions (pytest; no decorator needed). Each test
+  gets its own empty storage.
+- `call(cog.<command>, interaction, *options)` runs the command. For a `discord.Member` option,
+  pass a `FakeUser(...)`.
+- For commands that call `defer()`, check `i.deferred` and read the follow-up from `i.text`.
+- Don't test randomness exactly. Check that the reply is one of the options, or use
+  `random.seed(1)` first.
+- Commands that call `ducksbucks` need the real website. Test only the formatting parts, or
+  skip the test.
 
 ## Delivering it
 
