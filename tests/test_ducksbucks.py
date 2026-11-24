@@ -10,12 +10,12 @@ def test_format_games():
 def test_format_bets():
     bets = [
         {
-            "challenger": "Nick",
-            "challengee": "Sam",
+            "challenger": "Player One",
+            "challengee": "Player Two",
             "amount": 5,
             "challenger_pick": "Boston",
             "challengee_pick": "Toronto",
         }
     ]
-    assert format_bets(bets) == "Nick bet Sam 5 DucksBucks on Boston to beat Toronto"
+    assert format_bets(bets) == "Player One bet Player Two 5 DucksBucks on Boston to beat Toronto"
     assert format_bets([]) == "No unresolved bets today."
