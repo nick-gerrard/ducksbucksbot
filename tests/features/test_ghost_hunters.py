@@ -1,58 +1,50 @@
 """Tests for /ghosthunt."""
 
+from dataclasses import dataclass
+
 from ducksy.features.ghost_hunters import GhostHunters
+from tests.fakes import FakeInteraction, call
 
 
-class FakeResponse:
-    def __init__(self):
-        self.sent = []
+@dataclass
+class FakeRole:
+    id: int
+    name: str
 
-    async def send_message(self, text):
-        self.sent.append(text)
-
-
-class FakeUser:
-    def __init__(self, user_id, name):
-        self.id = user_id
-        self.display_name = name
-        self.mention = f"<@{user_id}>"
+    @property
+    def mention(self) -> str:
+        return f"<@&{self.id}>"
 
 
-class FakeInteraction:
-    def __init__(self, user):
-        self.user = user
-        self.response = FakeResponse()
+@dataclass
+class FakeGuild:
+    roles: list[FakeRole]
 
 
-ALICE = FakeUser(111, "Alice")
-BOB = FakeUser(222, "Bob")
-
-
-async def run(command, cog, user, *args):
-    interaction = FakeInteraction(user)
-    await command.callback(cog, interaction, *args)
-    return interaction.response.sent[0]
-
-
-async def test_no_hunters_yet():
+async def test_no_role_on_server():
     cog = GhostHunters(bot=None)  # type: ignore[arg-type]
-    text = await run(cog.ghosthunt, cog, ALICE, None)
-    assert "ghosthunt_join" in text
+    i = FakeInteraction()
+    i.guild = FakeGuild(roles=[FakeRole(1, "everyone")])  # type: ignore[attr-defined]
+    await call(cog.ghosthunt, i)
+    assert "no `@ghosthunters` role" in i.text
 
 
-async def test_join_call_and_leave():
+async def test_pings_only_the_ghosthunters_role():
     cog = GhostHunters(bot=None)  # type: ignore[arg-type]
-    await run(cog.ghosthunt_join, cog, ALICE)
-    await run(cog.ghosthunt_join, cog, BOB)
-    assert "already" in await run(cog.ghosthunt_join, cog, ALICE)
+    hunters = FakeRole(555, "GhostHunters")
+    i = FakeInteraction()
+    i.guild = FakeGuild(roles=[FakeRole(1, "everyone"), hunters])  # type: ignore[attr-defined]
+    await call(cog.ghosthunt, i, "tonight at 9pm")
 
-    text = await run(cog.ghosthunt, cog, ALICE, "tonight at 9pm")
-    assert "<@111>" in text and "<@222>" in text
-    assert "tonight at 9pm" in text
-    assert "Hunt #1" in text
+    assert "<@&555>" in i.text
+    assert "tonight at 9pm" in i.text
+    assert "Hunt #1" in i.text
+    allowed = i.sent[-1].allowed_mentions
+    assert allowed.roles == [hunters]
+    assert allowed.everyone is not True  # left to the bot's default (blocked)
 
-    await run(cog.ghosthunt_leave, cog, BOB)
-    text = await run(cog.ghosthunt, cog, ALICE, None)
-    assert "<@222>" not in text
-    assert "When" not in text
-    assert "Hunt #2" in text
+    i2 = FakeInteraction()
+    i2.guild = FakeGuild(roles=[hunters])  # type: ignore[attr-defined]
+    await call(cog.ghosthunt, i2)
+    assert "When" not in i2.text
+    assert "Hunt #2" in i2.text

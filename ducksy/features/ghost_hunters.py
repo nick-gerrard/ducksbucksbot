@@ -1,7 +1,7 @@
-"""/ghosthunt: call the ghost hunters to don the badge and fight the paranormal.
+"""/ghosthunt: call the @ghosthunters to don the badge and fight the paranormal.
 
-Discord role pings are blocked for the bot, so ghost hunters sign up with /ghosthunt_join
-and Duck$y pings each of them by name instead.
+The bot blocks role pings by default. This command lets through a ping for exactly one role,
+the server's "ghosthunters" role, and nothing else (no @everyone, no other roles).
 """
 
 import random
@@ -11,6 +11,8 @@ from discord import app_commands
 from discord.ext import commands
 
 from ducksy.storage import Store
+
+ROLE_NAME = "ghosthunters"
 
 RALLY_CRIES = [
     "Don the badge. Grab the EMF reader. The paranormal won't fight itself. 👻",
@@ -23,21 +25,22 @@ RALLY_CRIES = [
 ]
 
 
+def find_role(guild: discord.Guild | None) -> discord.Role | None:
+    if guild is None:
+        return None
+    for role in guild.roles:
+        if role.name.lower() == ROLE_NAME:
+            return role
+    return None
+
+
 class GhostHunters(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.store = Store("ghost_hunters")
 
-    def hunters(self) -> list[str]:
-        return self.store.load().get("hunters", [])
-
-    def save_hunters(self, hunters: list[str]) -> None:
-        data = self.store.load()
-        data["hunters"] = hunters
-        self.store.save(data)
-
     @app_commands.command(
-        name="ghosthunt", description="Call the ghost hunters to fight the paranormal"
+        name="ghosthunt", description="Call the @ghosthunters to fight the paranormal"
     )
     @app_commands.describe(when="When are you hunting? e.g. tonight at 9pm (optional)")
     async def ghosthunt(
@@ -45,47 +48,22 @@ class GhostHunters(commands.Cog):
         interaction: discord.Interaction,
         when: app_commands.Range[str, 1, 100] | None = None,
     ):
-        hunters = self.hunters()
-        if not hunters:
+        role = find_role(interaction.guild)
+        if role is None:
             await interaction.response.send_message(
-                "No ghost hunters yet! Sign up with `/ghosthunt_join` first. 👻"
+                f"There's no `@{ROLE_NAME}` role on this server yet. Ask an admin to make one! 👻"
             )
             return
         data = self.store.load()
         data["hunts"] = data.get("hunts", 0) + 1
         self.store.save(data)
-        pings = " ".join(f"<@{hunter}>" for hunter in hunters)
         timing = f"\n🕘 **When:** {when}" if when else ""
         await interaction.response.send_message(
-            f"🚨 **GHOST HUNTERS, ASSEMBLE!** 🚨\n{pings}\n\n"
+            f"🚨 **GHOST HUNTERS, ASSEMBLE!** 🚨 {role.mention}\n\n"
             f"{random.choice(RALLY_CRIES)}{timing}\n"
-            f"-# Called by {interaction.user.display_name}. Hunt #{data['hunts']}."
-        )
-
-    @app_commands.command(name="ghosthunt_join", description="Join the ghost hunters")
-    async def ghosthunt_join(self, interaction: discord.Interaction):
-        hunters = self.hunters()
-        me = str(interaction.user.id)
-        if me in hunters:
-            await interaction.response.send_message("You're already a ghost hunter. 🪪")
-            return
-        hunters.append(me)
-        self.save_hunters(hunters)
-        await interaction.response.send_message(
-            f"{interaction.user.mention} has joined the ghost hunters! Badge issued. 🪪👻"
-        )
-
-    @app_commands.command(name="ghosthunt_leave", description="Hand in your ghost hunter badge")
-    async def ghosthunt_leave(self, interaction: discord.Interaction):
-        hunters = self.hunters()
-        me = str(interaction.user.id)
-        if me not in hunters:
-            await interaction.response.send_message("You weren't a ghost hunter anyway. 🤷")
-            return
-        hunters.remove(me)
-        self.save_hunters(hunters)
-        await interaction.response.send_message(
-            f"{interaction.user.display_name} handed in their badge. The ghosts thank you. 👻"
+            f"-# Called by {interaction.user.display_name}. Hunt #{data['hunts']}.",
+            # Ping this one role only. Everything else stays blocked by the bot's defaults.
+            allowed_mentions=discord.AllowedMentions(roles=[role]),
         )
 
 
