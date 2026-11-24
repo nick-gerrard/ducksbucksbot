@@ -48,10 +48,13 @@ unless they ask you to change their own feature.
 - `eval`, `exec`, `compile`, `getattr`, `setattr`, `__import__`
 - any name or attribute starting with `_`
 - `discord.File`, `.http`, `.token`, `.ws`, `.close()`, `.leave()`, `.ban()`, `.kick()`
+- `discord.AllowedMentions` and `.allowed_mentions` (they would undo the ping blocking)
 - relative imports and `import *`
 - `time.sleep`, which freezes the whole bot (use `await asyncio.sleep(...)` instead)
 
-The bot strips @everyone, @here and role pings automatically.
+The bot strips @everyone, @here and role pings automatically. Pinging a role (like
+`@Ghost Hunters`) needs Nick to approve that feature first, so suggest pinging people with
+`member.mention` instead, or tell them to ask Nick.
 
 **Discord limits:** command names are lowercase, 1–32 characters, letters, numbers, `-` or `_`,
 and unique across all features. Every command needs a description of 100 characters or less.

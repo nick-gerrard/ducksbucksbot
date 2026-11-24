@@ -7,7 +7,8 @@ Two checks:
   1. Paths: a friend's PR may only add or change files in ducksy/features/ and tests/features/.
      Anything else (the bot core, dependencies, CI, deploy config) needs Nick.
   2. Code: every feature file may only import from an allow-list and may not use the
-     escape hatches below (files, processes, network, the bot's token, Python internals).
+     escape hatches below (files, processes, network, the bot's token, Python internals,
+     and pings that get around the bot's no-@everyone/no-role-ping defaults).
 
 This is a guard-rail against AI mistakes and casual misuse, not a perfect sandbox. The real
 boundaries are the systemd sandbox on the server and the bot's limited Discord permissions.
@@ -141,7 +142,19 @@ BANNED_ATTRS = {
     "prune_members": "kicks inactive people",
     "close": "shuts the bot down",
     "change_presence": "changes the bot's status for everyone (ask Nick)",
+    # pings: the bot's defaults block @everyone, @here and roles (see ducksy/bot.py)
+    "allowed_mentions": "changes who the bot can ping for every feature (ask Nick)",
+    "default_role": "is the @everyone role",
 }
+
+# Features that may ping a role, and only with `discord.AllowedMentions(roles=[some_role])`.
+# A per-message AllowedMentions overrides the bot's no-ping defaults, so each one is Nick's call.
+# This list lives in the checker, which CI runs from `main`, so a PR can't add itself to it.
+ROLE_PING_FEATURES = {"ghost_hunters.py"}
+NO_PINGS = (
+    "pinging @everyone, @here or roles is blocked; "
+    "if a role ping is really needed, ask Nick to approve it for this feature"
+)
 
 
 # Duck$y doesn't have Discord's Message Content intent, so these never see what people type.
@@ -167,6 +180,21 @@ def _is_super_init(node: ast.Attribute) -> bool:
     )
 
 
+def _role_ping_problem(call: ast.Call, path: str) -> str | None:
+    """Why this `AllowedMentions(...)` call isn't allowed, or None if it's fine."""
+    if Path(path).name not in ROLE_PING_FEATURES:
+        return f"uses `AllowedMentions`: {NO_PINGS}"
+    kw = call.keywords
+    if call.args or len(kw) != 1 or kw[0].arg != "roles":
+        return "uses `AllowedMentions` with something other than `roles=[...]`"
+    value = kw[0].value
+    if not isinstance(value, ast.List) or not value.elts:
+        return "uses `AllowedMentions(roles=...)` without a list of specific roles"
+    if any(isinstance(e, ast.Starred) for e in value.elts):
+        return "uses `AllowedMentions(roles=[*...])`; list each role on its own"
+    return None
+
+
 def check_source(path: str, source: str) -> list[str]:
     """Problems in one feature file, as human-readable strings."""
     try:
@@ -178,6 +206,18 @@ def check_source(path: str, source: str) -> list[str]:
 
     def bad(node: ast.AST, msg: str) -> None:
         problems.append(f"`{path}` line {getattr(node, 'lineno', '?')}: {msg}")
+
+    # `AllowedMentions` may only appear as `discord.AllowedMentions(...)` being called, so it
+    # can't be aliased, subclassed or reached through `.all()` and slip past the rule below.
+    mention_calls = {
+        id(n.func)
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and n.func.attr == "AllowedMentions"
+        and isinstance(n.func.value, ast.Name)
+        and n.func.value.id == "discord"
+    }
 
     if source.count("\n") > MAX_FEATURE_LINES:
         problems.append(f"`{path}`: over {MAX_FEATURE_LINES} lines; split it into smaller features")
@@ -205,11 +245,29 @@ def check_source(path: str, source: str) -> list[str]:
                 full = f"{mod}.{alias.name}"
                 if alias.name == "*":
                     bad(node, f"uses `from {mod} import *`; import names one by one")
+                elif alias.name == "AllowedMentions":
+                    bad(node, f"imports `{full}`: use `discord.AllowedMentions` ({NO_PINGS})")
                 elif alias.name in BANNED_ATTRS or alias.name.startswith("_"):
                     bad(node, f"imports `{full}`: {BANNED_ATTRS.get(alias.name, 'private name')}")
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in MESSAGE_EVENTS:
                 bad(node, f"defines `{node.name}`: {NO_MESSAGE_READING}")
+        elif isinstance(node, ast.Call) and id(node.func) in mention_calls:
+            if problem := _role_ping_problem(node, path):
+                bad(node, problem)
+        elif isinstance(node, ast.keyword) and node.arg == "allowed_mentions":
+            # discord.py reads .everyone/.users/.roles off anything passed here, so a homemade
+            # class would get around the AllowedMentions rules. Only a checked real one may pass.
+            value = node.value
+            if Path(path).name not in ROLE_PING_FEATURES:
+                bad(node, f"passes `allowed_mentions=`: {NO_PINGS}")
+            elif not (isinstance(value, ast.Call) and id(value.func) in mention_calls):
+                bad(
+                    node,
+                    "passes `allowed_mentions=` something other than `discord.AllowedMentions(roles=[...])`",
+                )
+        elif isinstance(node, ast.Constant) and node.value == "allowed_mentions":
+            bad(node, f"uses the text `'allowed_mentions'` (e.g. in `**{{...}}`): {NO_PINGS}")
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
@@ -220,7 +278,9 @@ def check_source(path: str, source: str) -> list[str]:
         ):
             bad(node, f"waits for a chat message: {NO_MESSAGE_READING}")
         elif isinstance(node, ast.Name):
-            if node.id in BANNED_NAMES:
+            if node.id == "AllowedMentions":
+                bad(node, f"uses `AllowedMentions` on its own: {NO_PINGS}")
+            elif node.id in BANNED_NAMES:
                 bad(node, f"uses `{node.id}`: {BANNED_NAMES[node.id]}")
             elif node.id.startswith("__") and node.id not in ("__name__", "__doc__"):
                 bad(node, f"uses `{node.id}`, a Python internal")
@@ -231,6 +291,8 @@ def check_source(path: str, source: str) -> list[str]:
                 bad(node, f"uses `.{node.attr}`: private and internal attributes are off limits")
             elif node.attr in BANNED_ATTRS:
                 bad(node, f"uses `.{node.attr}`: {BANNED_ATTRS[node.attr]}")
+            elif node.attr == "AllowedMentions" and id(node) not in mention_calls:
+                bad(node, f"uses `AllowedMentions` without calling it directly: {NO_PINGS}")
     return problems
 
 
