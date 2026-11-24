@@ -1,10 +1,11 @@
-"""/ghosthunt: call the @ghosthunters to don the badge and fight the paranormal.
+"""/ghosthunt: call the @Ghost Hunters to don the badge and fight the paranormal.
 
 The bot blocks role pings by default. This command lets through a ping for exactly one role,
-the server's "ghosthunters" role, and nothing else (no @everyone, no other roles).
+the server's "Ghost Hunters" role, and nothing else (no @everyone, no other roles).
 """
 
 import random
+import re
 
 import discord
 from discord import app_commands
@@ -12,7 +13,7 @@ from discord.ext import commands
 
 from ducksy.storage import Store
 
-ROLE_NAME = "ghosthunters"
+ROLE_NAME = "Ghost Hunters"
 
 RALLY_CRIES = [
     "Don the badge. Grab the EMF reader. The paranormal won't fight itself. 👻",
@@ -25,11 +26,16 @@ RALLY_CRIES = [
 ]
 
 
+def simplify(name: str) -> str:
+    """'Ghost Hunters', 'ghost-hunters' and 'GhostHunters' all become 'ghosthunters'."""
+    return re.sub(r"[\s_-]", "", name).lower()
+
+
 def find_role(guild: discord.Guild | None) -> discord.Role | None:
     if guild is None:
         return None
     for role in guild.roles:
-        if role.name.lower() == ROLE_NAME:
+        if simplify(role.name) == simplify(ROLE_NAME):
             return role
     return None
 
@@ -40,7 +46,7 @@ class GhostHunters(commands.Cog):
         self.store = Store("ghost_hunters")
 
     @app_commands.command(
-        name="ghosthunt", description="Call the @ghosthunters to fight the paranormal"
+        name="ghosthunt", description="Call the @Ghost Hunters to fight the paranormal"
     )
     @app_commands.describe(when="When are you hunting? e.g. tonight at 9pm (optional)")
     async def ghosthunt(

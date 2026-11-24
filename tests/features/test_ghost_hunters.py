@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+import pytest
+
 from ducksy.features.ghost_hunters import GhostHunters
 from tests.fakes import FakeInteraction, call
 
@@ -26,12 +28,21 @@ async def test_no_role_on_server():
     i = FakeInteraction()
     i.guild = FakeGuild(roles=[FakeRole(1, "everyone")])  # type: ignore[attr-defined]
     await call(cog.ghosthunt, i)
-    assert "no `@ghosthunters` role" in i.text
+    assert "no `@Ghost Hunters` role" in i.text
 
 
-async def test_pings_only_the_ghosthunters_role():
+@pytest.mark.parametrize("name", ["Ghost Hunters", "ghosthunters", "ghost-hunters"])
+async def test_role_name_variants(name):
     cog = GhostHunters(bot=None)  # type: ignore[arg-type]
-    hunters = FakeRole(555, "GhostHunters")
+    i = FakeInteraction()
+    i.guild = FakeGuild(roles=[FakeRole(7, name)])  # type: ignore[attr-defined]
+    await call(cog.ghosthunt, i)
+    assert "<@&7>" in i.text
+
+
+async def test_pings_only_the_ghost_hunters_role():
+    cog = GhostHunters(bot=None)  # type: ignore[arg-type]
+    hunters = FakeRole(555, "Ghost Hunters")
     i = FakeInteraction()
     i.guild = FakeGuild(roles=[FakeRole(1, "everyone"), hunters])  # type: ignore[attr-defined]
     await call(cog.ghosthunt, i, "tonight at 9pm")
