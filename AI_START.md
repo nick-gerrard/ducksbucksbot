@@ -220,12 +220,12 @@ class Morning(commands.Cog):
 **Duck$y can't read normal chat messages.** It doesn't have Discord's Message Content
 permission, so it never sees what people type in chat. Every feature has to start from a
 **slash command**, a **button or menu**, or a **schedule**. That rules out:
-- replying when someone says a certain word ("whenever Sam says Vegas…")
+- replying when someone says a certain word ("whenever someone says Vegas…")
 - auto-reactions, chat logging, or word counters
 - "type your answer in chat" games (use buttons or a command option instead)
 
 `on_message` listeners and `wait_for("message")` are rejected by the safety check. If the
-idea needs any of these, say so kindly, offer the closest version (e.g. `/vegas @sam`
+idea needs any of these, say so kindly, offer the closest version (e.g. `/vegas @someone`
 instead of an automatic reply), and tell them that reading chat is Nick's call.
 
 ## Testing (optional, but nice)

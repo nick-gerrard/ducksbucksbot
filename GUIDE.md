@@ -134,7 +134,7 @@ its task history.
 - Read or write files, or run programs
 - **Read normal chat messages.** Duck$y only sees slash commands, buttons, and schedules, so
   no "reply whenever someone says Vegas", no auto-reactions, and no "type your answer in
-  chat" games. The closest you can get is a command (`/vegas @sam`) or buttons.
+  chat" games. The closest you can get is a command (`/vegas @someone`) or buttons.
 - Ping @everyone or roles, kick or ban people, or make the bot leave
 - Change the bot's core, other people's features, or anything outside `ducksy/features/`
 
