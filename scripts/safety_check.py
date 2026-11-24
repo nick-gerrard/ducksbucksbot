@@ -255,6 +255,19 @@ def check_source(path: str, source: str) -> list[str]:
         elif isinstance(node, ast.Call) and id(node.func) in mention_calls:
             if problem := _role_ping_problem(node, path):
                 bad(node, problem)
+        elif isinstance(node, ast.keyword) and node.arg == "allowed_mentions":
+            # discord.py reads .everyone/.users/.roles off anything passed here, so a homemade
+            # class would get around the AllowedMentions rules. Only a checked real one may pass.
+            value = node.value
+            if Path(path).name not in ROLE_PING_FEATURES:
+                bad(node, f"passes `allowed_mentions=`: {NO_PINGS}")
+            elif not (isinstance(value, ast.Call) and id(value.func) in mention_calls):
+                bad(
+                    node,
+                    "passes `allowed_mentions=` something other than `discord.AllowedMentions(roles=[...])`",
+                )
+        elif isinstance(node, ast.Constant) and node.value == "allowed_mentions":
+            bad(node, f"uses the text `'allowed_mentions'` (e.g. in `**{{...}}`): {NO_PINGS}")
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)

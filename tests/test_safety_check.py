@@ -77,6 +77,10 @@ def test_catches(code):
         "interaction.client.allowed_mentions = None",
         "bot.allowed_mentions.everyone",
         "role = guild.default_role",
+        # a homemade stand-in: discord.py reads .everyone etc. off anything passed here
+        "await i.response.send_message('hi', allowed_mentions=Pings())",
+        "await i.response.send_message('hi', **{'allowed_mentions': Pings()})",
+        "opts = dict(allowed_mentions=Pings())",
     ],
 )
 def test_catches_pings(code):
@@ -87,7 +91,12 @@ def test_role_ping_features_may_ping_specific_roles_only():
     path = "ducksy/features/ghost_hunters.py"
     assert check_source(path, "discord.AllowedMentions(roles=[role])") == []
     assert check_source(path, "discord.AllowedMentions(roles=[a, b])") == []
+    ok = "await i.response.send_message('hi', allowed_mentions=discord.AllowedMentions(roles=[r]))"
+    assert check_source(path, ok) == []
     for code in [
+        "await i.response.send_message('hi', allowed_mentions=Pings())",
+        "await i.response.send_message('hi', allowed_mentions=mentions)",
+        "await i.response.send_message('hi', **{'allowed_mentions': Pings()})",
         "discord.AllowedMentions(everyone=True)",
         "discord.AllowedMentions(roles=True)",
         "discord.AllowedMentions(roles=guild.roles)",
