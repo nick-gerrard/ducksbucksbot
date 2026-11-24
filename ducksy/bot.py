@@ -26,7 +26,9 @@ class Ducksy(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned,
             intents=discord.Intents.default(),
-            # Never mass-ping: no @everyone/@here or role pings, whatever a feature sends.
+            # Never mass-ping: no @everyone/@here or role pings. A message's own allowed_mentions
+            # overrides this, so scripts/safety_check.py bans AllowedMentions in features except
+            # roles=[...] in the few it lists in ROLE_PING_FEATURES.
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True),
         )
         self.failed_features: dict[str, str] = {}

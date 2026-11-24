@@ -63,6 +63,46 @@ def test_catches(code):
     assert check_source("f.py", code), code
 
 
+@pytest.mark.parametrize(
+    "code",
+    [
+        # any feature not on the role-ping list
+        "discord.AllowedMentions(roles=[role])",
+        "discord.AllowedMentions(everyone=True)",
+        "discord.AllowedMentions.all()",
+        "AM = discord.AllowedMentions",
+        "from discord import AllowedMentions",
+        "AllowedMentions(everyone=True)",
+        "class M(discord.AllowedMentions): pass",
+        "interaction.client.allowed_mentions = None",
+        "bot.allowed_mentions.everyone",
+        "role = guild.default_role",
+    ],
+)
+def test_catches_pings(code):
+    assert check_source("ducksy/features/f.py", code), code
+
+
+def test_role_ping_features_may_ping_specific_roles_only():
+    path = "ducksy/features/ghost_hunters.py"
+    assert check_source(path, "discord.AllowedMentions(roles=[role])") == []
+    assert check_source(path, "discord.AllowedMentions(roles=[a, b])") == []
+    for code in [
+        "discord.AllowedMentions(everyone=True)",
+        "discord.AllowedMentions(roles=True)",
+        "discord.AllowedMentions(roles=guild.roles)",
+        "discord.AllowedMentions(roles=[*guild.roles])",
+        "discord.AllowedMentions(roles=[r for r in guild.roles])",
+        "discord.AllowedMentions(roles=[])",
+        "discord.AllowedMentions(roles=[role], everyone=True)",
+        "discord.AllowedMentions(roles=[role], users=True)",
+        "discord.AllowedMentions(**opts)",
+        "discord.AllowedMentions.all()",
+        "AM = discord.AllowedMentions",
+    ]:
+        assert check_source(path, code), code
+
+
 def test_paths():
     assert check_paths(["ducksy/features/new.py", "tests/features/test_new.py"]) == []
     assert check_paths(["ducksy/bot.py"])
