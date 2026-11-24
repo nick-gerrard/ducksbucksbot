@@ -144,6 +144,15 @@ BANNED_ATTRS = {
 }
 
 
+# Duck$y doesn't have Discord's Message Content intent, so these never see what people type.
+# Code using them passes tests but silently does nothing live, so stop it here.
+NO_MESSAGE_READING = (
+    "Duck$y can't read normal chat messages, so this would never trigger. "
+    "Start the feature from a slash command, a button, or a schedule instead"
+)
+MESSAGE_EVENTS = {"on_message", "on_message_edit", "on_message_delete", "on_raw_message_edit"}
+
+
 def _is_allowed_import(module: str) -> bool:
     return module in ALLOWED_IMPORTS or module.startswith(ALLOWED_IMPORT_PREFIXES)
 
@@ -198,6 +207,18 @@ def check_source(path: str, source: str) -> list[str]:
                     bad(node, f"uses `from {mod} import *`; import names one by one")
                 elif alias.name in BANNED_ATTRS or alias.name.startswith("_"):
                     bad(node, f"imports `{full}`: {BANNED_ATTRS.get(alias.name, 'private name')}")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name in MESSAGE_EVENTS:
+                bad(node, f"defines `{node.name}`: {NO_MESSAGE_READING}")
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "wait_for"
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+            and str(node.args[0].value).startswith("message")
+        ):
+            bad(node, f"waits for a chat message: {NO_MESSAGE_READING}")
         elif isinstance(node, ast.Name):
             if node.id in BANNED_NAMES:
                 bad(node, f"uses `{node.id}`: {BANNED_NAMES[node.id]}")

@@ -54,6 +54,9 @@ def test_ok_feature():
         "from . import x",
         "from discord import *",
         "def f(:",
+        "async def on_message(self, message): pass",
+        "async def on_message_edit(self, before, after): pass",
+        "await bot.wait_for('message', check=lambda m: True)",
     ],
 )
 def test_catches(code):

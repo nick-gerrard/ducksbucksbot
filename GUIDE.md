@@ -132,7 +132,9 @@ its task history.
 **Can't** (the safety check blocks these):
 - Visit other websites, so no GIF search, weather, or live scores (yet)
 - Read or write files, or run programs
-- Read normal chat messages (Duck$y only sees slash commands and buttons)
+- **Read normal chat messages.** Duck$y only sees slash commands, buttons, and schedules, so
+  no "reply whenever someone says Vegas", no auto-reactions, and no "type your answer in
+  chat" games. The closest you can get is a command (`/vegas @sam`) or buttons.
 - Ping @everyone or roles, kick or ban people, or make the bot leave
 - Change the bot's core, other people's features, or anything outside `ducksy/features/`
 
@@ -156,6 +158,7 @@ the group.
 | The checks show "Approve and run" or just wait | Rare for collaborators. Nudge Nick in Discord. |
 | Your command doesn't show in Discord after the merge | Wait 5 minutes and restart Discord. Still missing? Tell Nick. |
 | The command says "Quack! Something went wrong" | It crashed. Tell Nick which command and what you typed; he can see the error and pass it to you for your agent. |
+| Can Duck$y reply automatically when someone says a word? | No: it can't read chat (section 6). Make it a command instead, like `/vegas @someone`. |
 | You messed everything up | Close the PR (bottom of the PR page) and start a new task. Nothing breaks: only Nick can put things live. |
 
 ---
