@@ -16,13 +16,29 @@ from ducksy.storage import Store
 ROLE_NAME = "Ghost Hunters"
 
 RALLY_CRIES = [
-    "Don the badge. Grab the EMF reader. The paranormal won't fight itself. 👻",
+    "Don the badge. Grab the EMF reader. Update your will. 👻",
     "Something is knocking in the walls and it owes us DucksBucks. Suit up. 🔦",
-    "Ghosts don't pay rent. Time to evict them. 🏚️",
-    "Salt the doorways, light the candles, and try not to scream on comms. 🕯️",
-    "The spirit box is crackling. It's asking for you by name. 📻",
-    "Odds of everyone surviving tonight: 12 to 1. Let's go. 💀",
-    "Who you gonna call? Apparently Duck$y. Badges on. 🦆",
+    "Ghosts don't pay rent. Neither do you, but at least you're alive. Probably. 🏚️",
+    "Salt the doorways, light the candles, and if you scream on comms you're bait. 🕯️",
+    "The spirit box is crackling. It's asking for you by name. It sounds disappointed. 📻",
+    "Odds of everyone surviving tonight: 12 to 1. Duck$y has already bet the under. 💀",
+    "Who you gonna call? Apparently Duck$y. Nobody else picked up. 🦆",
+    "Reminder: you don't have to outrun the ghost. You have to outrun the slowest hunter. 🏃",
+    "Last hunt we lost one. Not a person, just their dignity. Tonight we aim for more. ⚰️",
+    "The house is 200 years old, the basement door locks from the outside, and we're going in. 🚪",
+    "If you get possessed, please do it somewhere with good lighting. Content is content. 📸",
+    "The ghost has unfinished business. So does your parlay. Only one of them is coming back. 🎰",
+    "Bring a flashlight, a crucifix, and someone you're fine leaving behind. 🔦",
+    "The dead are restless. Honestly, same. Let's go bother them. 🪦",
+    "Duck$y's insurance policy covers ghosts. Yours does not. Sign the waiver. 📝",
+]
+
+SIGN_OFFS = [
+    "Called by {who}. Hunt #{n}. Next of kin: not notified.",
+    "Called by {who}. Hunt #{n}. Survivors so far: unclear.",
+    "Called by {who}, who will be standing at the back. Hunt #{n}.",
+    'Called by {who}. Hunt #{n}. Whoever says "did you hear that" first goes in first.',
+    "Called by {who}. Hunt #{n}. Duck$y is not liable for hauntings, possessions or vibes.",
 ]
 
 
@@ -57,7 +73,8 @@ class GhostHunters(commands.Cog):
         role = find_role(interaction.guild)
         if role is None:
             await interaction.response.send_message(
-                f"There's no `@{ROLE_NAME}` role on this server yet. Ask an admin to make one! 👻"
+                f"There's no `@{ROLE_NAME}` role on this server yet. Nobody to call. "
+                "You're on your own with whatever's in the walls. Ask an admin to make one. 👻"
             )
             return
         data = self.store.load()
@@ -67,7 +84,8 @@ class GhostHunters(commands.Cog):
         await interaction.response.send_message(
             f"🚨 **GHOST HUNTERS, ASSEMBLE!** 🚨 {role.mention}\n\n"
             f"{random.choice(RALLY_CRIES)}{timing}\n"
-            f"-# Called by {interaction.user.display_name}. Hunt #{data['hunts']}.",
+            "-# "
+            + random.choice(SIGN_OFFS).format(who=interaction.user.display_name, n=data["hunts"]),
             # Ping this one role only. Everything else stays blocked by the bot's defaults.
             allowed_mentions=discord.AllowedMentions(roles=[role]),
         )
