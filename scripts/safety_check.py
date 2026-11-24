@@ -43,6 +43,7 @@ ALLOWED_IMPORTS = {
     "discord.ext.tasks",
     "discord.ui",
     "ducksy.ducksbucks",
+    "ducksy.media",
     "ducksy.settings",
     "ducksy.storage",
     "enum",
@@ -150,7 +151,7 @@ BANNED_ATTRS = {
 # Features that may ping a role, and only with `discord.AllowedMentions(roles=[some_role])`.
 # A per-message AllowedMentions overrides the bot's no-ping defaults, so each one is Nick's call.
 # This list lives in the checker, which CI runs from `main`, so a PR can't add itself to it.
-ROLE_PING_FEATURES = {"ghost_hunters.py"}
+ROLE_PING_FEATURES = {"ghost_hunters.py", "call.py"}
 NO_PINGS = (
     "pinging @everyone, @here or roles is blocked; "
     "if a role ping is really needed, ask Nick to approve it for this feature"
