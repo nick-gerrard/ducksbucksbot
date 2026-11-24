@@ -37,7 +37,8 @@ unless they ask you to change their own feature.
 - `discord`, `discord.app_commands`, `discord.ext`, `discord.ext.commands`, `discord.ext.tasks`,
   `discord.ui`
 - `ducksy.ducksbucks` (today's games and open bets), `ducksy.storage` (remember things),
-  `ducksy.settings` (the main channel ID and timezone), other `ducksy.features.*` modules
+  `ducksy.media` (random server-hosted images), `ducksy.settings` (the main channel ID and
+  timezone), other `ducksy.features.*` modules
 - From Python itself: `asyncio`, `collections`, `dataclasses`, `datetime`, `enum`, `functools`,
   `itertools`, `json`, `logging`, `math`, `random`, `re`, `statistics`, `string`, `textwrap`,
   `typing`, `zoneinfo`, `__future__`
